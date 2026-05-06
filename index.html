@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b84ff" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>Injection Tracker Pro</title>
+<style>
+:root{--bg:#0f172a;--card:#111827;--muted:#9ca3af;--text:#e5e7eb;--accent:#0b84ff;--danger:#ef4444;--ok:#22c55e}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#020617,#0b1220 30%,#020617);color:var(--text)}
+.container{max-width:760px;margin:0 auto;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.title{font-size:22px;font-weight:700}
+.badge{font-size:12px;color:#93c5fd}
+.card{background:rgba(17,24,39,.8);backdrop-filter: blur(10px);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px}
+.col{flex:1}
+label{font-size:12px;color:var(--muted)}
+input,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#020617;color:var(--text);outline:none}
+button{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#020617;color:var(--text)}
+button.primary{background:var(--accent);border:none}
+button.ghost{background:transparent}
+button.danger{background:var(--danger);border:none}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:12px;background:#020617;border:1px solid rgba(255,255,255,.06)}
+.item .meta{font-size:12px;color:var(--muted)}
+.countdown{font-variant-numeric:tabular-nums}
+.kpi{display:flex;gap:10px;flex-wrap:wrap}
+.kpi .box{flex:1;min-width:120px;background:#020617;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px}
+.small{font-size:12px;color:var(--muted)}
+.footer{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:#020617;border:1px solid rgba(255,255,255,.08);padding:10px 14px;border-radius:12px;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="title">💉 Injection Tracker Pro</div>
+    <div class="badge" id="swStatus">offline-ready</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>Препарат</label>
+        <input id="drug" placeholder="Например: Эноксапарин" />
+      </div>
+      <div class="col">
+        <label>Интервал (часы)</label>
+        <input id="interval" type="number" min="1" step="1" placeholder="24" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Доза (опц.)</label>
+        <input id="dose" placeholder="Напр. 40 мг" />
+      </div>
+      <div class="col">
+        <label>Напоминание (мин до)</label>
+        <input id="remind" type="number" min="0" step="5" placeholder="15" />
+      </div>
+    </div>
+    <div class="row">
+      <button class="primary" onclick="addInjection()">Сделал укол</button>
+      <button onclick="requestNotify()">Включить уведомления</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kpi">
+      <div class="box">
+        <div class="small">Следующий</div>
+        <div id="nextTime">—</div>
+      </div>
+      <div class="box">
+        <div class="small">До укола</div>
+        <div class="countdown" id="countdown">—</div>
+      </div>
+      <div class="box">
+        <div class="small">Активные препараты</div>
+        <div id="activeCount">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div><b>Активные</b></div>
+      <div class="small">несколько препаратов поддерживаются</div>
+    </div>
+    <div id="activeList" class="list"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div><b>История</b></div>
+      <div class="small">локально на устройстве</div>
+    </div>
+    <div id="history" class="list"></div>
+  </div>
+
+  <div class="card">
+    <div class="footer">
+      <button onclick="exportData()">Экспорт JSON</button>
+      <button onclick="importData()">Импорт</button>
+      <button class="danger" onclick="clearAll()">Очистить всё</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const DB_KEY = 'inj_v2';
+let db = load();
+
+function load(){
+  try{return JSON.parse(localStorage.getItem(DB_KEY))||{events:[],profiles:{}}}catch(e){return {events:[],profiles:{}}}
+}
+function save(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+function addInjection(){
+  const drug = val('drug');
+  const interval = +val('interval');
+  const dose = val('dose');
+  const remind = +val('remind')||0;
+  if(!drug || !interval) return toast('Заполни препарат и интервал');
+
+  const now = Date.now();
+  const next = now + interval*3600000;
+
+  // profile per drug
+  db.profiles[drug] = {interval, dose, remind};
+
+  db.events.push({id:uid(), drug, dose, time:now, next});
+  save();
+  scheduleNotification({drug, next, remind});
+  render();
+  toast('Сохранено');
+}
+
+function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
+function val(id){return document.getElementById(id).value.trim()}
+
+function render(){
+  const events = db.events.slice().sort((a,b)=>b.time-a.time);
+
+  // history
+  const h = document.getElementById('history'); h.innerHTML='';
+  events.forEach(e=>{
+    const el = document.createElement('div'); el.className='item';
+    el.innerHTML = `<div><b>${e.drug}</b> ${e.dose?`• ${e.dose}`:''}<div class="meta">${fmt(e.time)}</div></div>
+    <div class="row">
+      <button class="ghost" onclick="repeat('${e.drug}')">↻</button>
+      <button class="danger" onclick="del('${e.id}')">✕</button>
+    </div>`;
+    h.appendChild(el);
+  });
+
+  // active per drug (latest)
+  const latestByDrug = {};
+  db.events.forEach(e=>{ if(!latestByDrug[e.drug] || latestByDrug[e.drug].time < e.time) latestByDrug[e.drug]=e; });
+  const act = Object.values(latestByDrug).sort((a,b)=>a.next-b.next);
+  const ael = document.getElementById('activeList'); ael.innerHTML='';
+
+  act.forEach(e=>{
+    const prof = db.profiles[e.drug]||{};
+    const el = document.createElement('div'); el.className='item';
+    el.innerHTML = `<div>
+      <b>${e.drug}</b> ${prof.dose?`• ${prof.dose}`:''}
+      <div class="meta">след: ${fmt(e.next)}</div>
+    </div>
+    <div class="countdown" data-next="${e.next}">—</div>`;
+    ael.appendChild(el);
+  });
+
+  document.getElementById('activeCount').innerText = act.length;
+
+  // next global
+  if(act.length){
+    document.getElementById('nextTime').innerText = fmt(act[0].next);
+  } else {
+    document.getElementById('nextTime').innerText = '—';
+  }
+}
+
+function tick(){
+  const nodes = document.querySelectorAll('[data-next]');
+  let minNext = Infinity;
+  nodes.forEach(n=>{
+    const next = +n.getAttribute('data-next');
+    if(next<minNext) minNext = next;
+    n.innerText = diff(next);
+  });
+  const cd = document.getElementById('countdown');
+  cd.innerText = isFinite(minNext)? diff(minNext): '—';
+}
+setInterval(tick,1000);
+
+function diff(ts){
+  let s = Math.max(0, Math.floor((ts-Date.now())/1000));
+  const h = Math.floor(s/3600); s%=3600;
+  const m = Math.floor(s/60); s%=60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+function pad(n){return String(n).padStart(2,'0')}
+function fmt(ts){return new Date(ts).toLocaleString()}
+
+function del(id){ db.events = db.events.filter(e=>e.id!==id); save(); render(); }
+function repeat(drug){ const p=db.profiles[drug]; if(!p) return; document.getElementById('drug').value=drug; document.getElementById('interval').value=p.interval; document.getElementById('dose').value=p.dose||''; document.getElementById('remind').value=p.remind||''; }
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'injections.json'; a.click();
+}
+function importData(){
+  const i = document.createElement('input'); i.type='file'; i.accept='application/json';
+  i.onchange = e=>{
+    const f = e.target.files[0];
+    const r = new FileReader();
+    r.onload = ()=>{ try{ db = JSON.parse(r.result); save(); render(); toast('Импортировано'); }catch(err){ toast('Ошибка файла'); } };
+    r.readAsText(f);
+  };
+  i.click();
+}
+function clearAll(){ if(confirm('Удалить все данные?')){ db={events:[],profiles:{}}; save(); render(); }}
+
+// Notifications
+async function requestNotify(){
+  if(!('Notification' in window)) return toast('Нет поддержки уведомлений');
+  const p = await Notification.requestPermission();
+  toast(p==='granted'?'Разрешено':'Отклонено');
+}
+
+function scheduleNotification({drug,next,remind}){
+  if(Notification.permission!=='granted') return;
+  const when = next - (remind||0)*60000;
+  const delay = when - Date.now();
+  if(delay<=0) return;
+  setTimeout(()=>{
+    new Notification('Скоро укол', { body: drug });
+  }, delay);
+}
+
+// Service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>{
+    document.getElementById('swStatus').innerText = 'installed';
+  }).catch(()=>{});
+}
+
+function toast(t){
+  const el = document.getElementById('toast');
+  el.innerText = t; el.style.display='block';
+  setTimeout(()=>el.style.display='none',2000);
+}
+
+render();
+</script>
+</body>
+</html>

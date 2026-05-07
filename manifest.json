@@ -1,0 +1,21 @@
+{
+  "name": "Injection Tracker Pro",
+  "short_name": "Injections",
+  "description": "Учёт инъекций: даты, интервалы, напоминания. Работает офлайн.",
+  "start_url": "/Medic/",
+  "scope": "/Medic/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#0b84ff",
+  "lang": "ru",
+  "categories": ["health", "medical", "lifestyle"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

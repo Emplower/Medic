@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#0b84ff" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>Injection Tracker Pro</title>
+<style>
+:root{
+  --bg:#020617;
+  --bg-2:#0b1220;
+  --card:rgba(17,24,39,.78);
+  --card-solid:#0f172a;
+  --line:rgba(255,255,255,.07);
+  --line-strong:rgba(255,255,255,.14);
+  --muted:#94a3b8;
+  --text:#e5e7eb;
+  --text-bright:#f8fafc;
+  --accent:#0b84ff;
+  --accent-2:#38bdf8;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#22c55e;
+  --field:#020617;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(11,132,255,.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(56,189,248,.10), transparent 60%),
+    linear-gradient(180deg,#020617,#0b1220 30%,#020617);
+  color:var(--text);
+  min-height:100vh;
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.container{max-width:760px;margin:0 auto;padding:16px 14px 32px}
+
+/* ---------- header ---------- */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.title{font-size:22px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.title .ico{font-size:24px;filter:drop-shadow(0 2px 6px rgba(11,132,255,.4))}
+.badge{font-size:11px;color:#93c5fd;padding:5px 10px;border-radius:999px;background:rgba(11,132,255,.1);border:1px solid rgba(11,132,255,.25)}
+.badge.warn{color:#fbbf24;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25)}
+.badge.ok{color:#86efac;background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.25)}
+
+/* ---------- card ---------- */
+.card{
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:12px;
+}
+.card .card-title{font-size:13px;font-weight:600;color:var(--text-bright);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card .card-title .small{font-weight:400;color:var(--muted);font-size:11px}
+
+.row{display:flex;gap:8px}
+.row+.row{margin-top:8px}
+.col{flex:1;min-width:0}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
+input,select,textarea{
+  width:100%;
+  padding:11px 12px;
+  border-radius:11px;
+  border:1px solid var(--line-strong);
+  background:var(--field);
+  color:var(--text);
+  outline:none;
+  font-size:15px;
+  font-family:inherit;
+  transition:border-color .15s, box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(11,132,255,.18);
+}
+input[type="number"]{-moz-appearance:textfield}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* ---------- segmented (часы/дни/недели) ---------- */
+.seg{display:flex;background:var(--field);border:1px solid var(--line-strong);border-radius:11px;padding:3px;gap:3px}
+.seg button{
+  flex:1;padding:9px 6px;border-radius:8px;border:0;background:transparent;color:var(--muted);
+  font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit;
+}
+.seg button.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(11,132,255,.4)}
+
+/* ---------- preset chips (8/10 недель Небидо) ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{
+  font-size:12px;padding:6px 10px;border-radius:999px;
+  background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.22);
+  color:#7dd3fc;cursor:pointer;transition:all .15s;font-family:inherit;
+}
+.chip:hover,.chip.active{background:rgba(56,189,248,.18);color:#bae6fd;border-color:rgba(56,189,248,.5)}
+
+/* ---------- buttons ---------- */
+button{
+  padding:11px 14px;border-radius:12px;border:1px solid var(--line-strong);
+  background:var(--field);color:var(--text);cursor:pointer;font-size:14px;
+  font-family:inherit;transition:transform .08s, background .15s, border-color .15s;
+}
+button:active{transform:scale(.97)}
+button.primary{
+  background:linear-gradient(180deg,#1e90ff,var(--accent));
+  border:none;color:#fff;font-weight:600;
+  box-shadow:0 4px 14px rgba(11,132,255,.35);
+}
+button.primary:hover{filter:brightness(1.08)}
+button.ghost{background:transparent;border-color:var(--line)}
+button.danger{background:linear-gradient(180deg,#f87171,var(--danger));border:none;color:#fff;font-weight:600}
+button.warn{background:linear-gradient(180deg,#fbbf24,var(--warn));border:none;color:#1c1917;font-weight:600}
+button.icon{padding:8px 10px;font-size:13px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn-row > *{flex:1;min-width:0}
+
+/* ---------- KPI ---------- */
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi .box{
+  background:var(--field);border:1px solid var(--line);
+  border-radius:13px;padding:12px;
+}
+.kpi .box .small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.kpi .box .big{font-size:18px;font-weight:600;color:var(--text-bright);font-variant-numeric:tabular-nums}
+.kpi .box.span2{grid-column:span 2}
+
+/* ---------- progress ring/bar ---------- */
+.progress{
+  height:6px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:8px;
+}
+.progress .fill{
+  height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  border-radius:999px;transition:width .4s ease;
+}
+.progress .fill.over{background:linear-gradient(90deg,var(--warn),var(--danger))}
+
+/* ---------- list / item ---------- */
+.list{display:flex;flex-direction:column;gap:8px}
+.item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 12px;border-radius:13px;background:var(--field);
+  border:1px solid var(--line);
+}
+.item .info{flex:1;min-width:0}
+.item .name{font-weight:600;color:var(--text-bright);font-size:14px}
+.item .meta{font-size:11px;color:var(--muted);margin-top:2px}
+.item .meta .sep{margin:0 6px;opacity:.5}
+.item .actions{display:flex;gap:4px;flex-shrink:0}
+.item .actions button{padding:7px 9px;font-size:13px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.item .countdown{font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:var(--accent-2);text-align:right}
+.item .countdown.overdue{color:var(--warn)}
+.item .countdown small{display:block;font-size:10px;font-weight:400;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+.empty{text-align:center;padding:18px;color:var(--muted);font-size:13px}
+
+/* ---------- modal ---------- */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  display:none;align-items:flex-end;justify-content:center;z-index:50;
+  padding:0;
+}
+.modal-bg.open{display:flex;animation:fadeIn .2s ease}
+.modal{
+  width:100%;max-width:520px;background:var(--card-solid);
+  border-top-left-radius:22px;border-top-right-radius:22px;
+  border:1px solid var(--line-strong);border-bottom:0;
+  padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  animation:slideUp .25s cubic-bezier(.2,.8,.2,1);
+  max-height:90vh;overflow-y:auto;
+}
+.modal h3{margin:0 0 12px;font-size:17px;font-weight:600;color:var(--text-bright)}
+.modal .handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:99px;margin:0 auto 12px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));
+  background:var(--card-solid);border:1px solid var(--line-strong);
+  padding:11px 16px;border-radius:12px;display:none;z-index:100;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:14px;
+}
+.toast.ok{border-color:rgba(34,197,94,.4)}
+.toast.err{border-color:rgba(239,68,68,.4)}
+
+/* ---------- footer buttons ---------- */
+.footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* small screens */
+@media (max-width:380px){
+  .kpi{grid-template-columns:1fr}
+  .kpi .box.span2{grid-column:auto}
+  .footer-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="title"><span class="ico">💉</span> Injection Tracker</div>
+    <div class="badge" id="swStatus">offline</div>
+  </div>
+
+  <!-- ADD / EDIT -->
+  <div class="card">
+    <div class="card-title">
+      <span id="formTitle">Записать укол</span>
+      <span class="small" id="formHint">всё хранится только на устройстве</span>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Препарат</label>
+        <input id="drug" list="drugList" placeholder="Небидо" autocomplete="off" />
+        <datalist id="drugList"></datalist>
+      </div>
+      <div class="col">
+        <label>Доза (опц.)</label>
+        <input id="dose" placeholder="1000 мг / 4 мл" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Дата и время укола</label>
+        <input id="when" type="datetime-local" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Интервал до следующего</label>
+        <input id="interval" type="number" min="1" step="1" inputmode="numeric" placeholder="10" />
+      </div>
+      <div class="col">
+        <label>Единица</label>
+        <div class="seg" id="unitSeg">
+          <button data-unit="hour">часы</button>
+          <button data-unit="day">дни</button>
+          <button data-unit="week" class="active">недели</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips" id="presets">
+      <div class="chip" data-preset='{"drug":"Небидо","dose":"1000 мг","interval":10,"unit":"week"}'>Небидо · 10 нед</div>
+      <div class="chip" data-preset='{"drug":"Небидо","dose":"1000 мг","interval":8,"unit":"week"}'>Небидо · 8 нед</div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>Напоминание</label>
+        <select id="remindUnit">
+          <option value="0">не нужно</option>
+          <option value="60">за 1 час</option>
+          <option value="1440" selected>за 1 день</option>
+          <option value="2880">за 2 дня</option>
+          <option value="4320">за 3 дня</option>
+          <option value="10080">за 1 неделю</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Заметка (опц.)</label>
+        <input id="note" placeholder="лев./прав. ягодица" />
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="primary" id="saveBtn" onclick="saveInjection()">Сохранить</button>
+      <button class="ghost" id="cancelEditBtn" onclick="cancelEdit()" style="display:none">Отмена</button>
+    </div>
+    <div class="btn-row" id="notifyRow">
+      <button onclick="requestNotify()">Включить уведомления</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="card">
+    <div class="kpi">
+      <div class="box span2">
+        <div class="small">До следующего укола</div>
+        <div class="big" id="countdown">—</div>
+        <div class="progress"><div class="fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+      <div class="box">
+        <div class="small">Следующий</div>
+        <div class="big" id="nextTime" style="font-size:14px">—</div>
+      </div>
+      <div class="box">
+        <div class="small">Активных препаратов</div>
+        <div class="big" id="activeCount">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE -->
+  <div class="card">
+    <div class="card-title">
+      <span>Активные курсы</span>
+      <span class="small">по последнему уколу</span>
+    </div>
+    <div id="activeList" class="list"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <div class="card-title">
+      <span>История</span>
+      <span class="small">всего: <span id="histCount">0</span></span>
+    </div>
+    <div id="history" class="list"></div>
+  </div>
+
+  <!-- DATA -->
+  <div class="card">
+    <div class="card-title"><span>Данные</span></div>
+    <div class="footer-grid">
+      <button onclick="exportData()">Экспорт</button>
+      <button onclick="importData()">Импорт</button>
+      <button class="danger" onclick="clearAll()">Очистить</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModalIfBg(event)">
+  <div class="modal" id="modalBox">
+    <div class="handle"></div>
+    <h3 id="modalTitle">Редактировать запись</h3>
+    <div class="row">
+      <div class="col">
+        <label>Препарат</label>
+        <input id="m_drug" />
+      </div>
+      <div class="col">
+        <label>Доза</label>
+        <input id="m_dose" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Дата и время</label>
+        <input id="m_when" type="datetime-local" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Интервал</label>
+        <input id="m_interval" type="number" min="1" inputmode="numeric" />
+      </div>
+      <div class="col">
+        <label>Единица</label>
+        <div class="seg" id="m_unitSeg">
+          <button data-unit="hour">часы</button>
+          <button data-unit="day">дни</button>
+          <button data-unit="week">недели</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Заметка</label>
+        <input id="m_note" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" onclick="saveModal()">Сохранить</button>
+      <button class="ghost" onclick="closeModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   DATA LAYER
+============================================================ */
+const DB_KEY = 'inj_v3';
+const UNIT_MS = { hour: 3600000, day: 86400000, week: 604800000 };
+const UNIT_LABEL = { hour: 'ч', day: 'дн', week: 'нед' };
+const UNIT_LABEL_FULL = { hour: 'часов', day: 'дней', week: 'недель' };
+
+let db = load();
+let editingId = null;
+let currentUnit = 'week';
+let modalUnit = 'week';
+
+function load(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if (!raw) {
+      // миграция со старой версии inj_v2 (часы)
+      const old = localStorage.getItem('inj_v2');
+      if (old) {
+        const parsed = JSON.parse(old);
+        const migrated = migrateV2(parsed);
+        localStorage.setItem(DB_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+      return { events:[], profiles:{} };
+    }
+    const data = JSON.parse(raw);
+    if (!data.events) data.events = [];
+    if (!data.profiles) data.profiles = {};
+    return data;
+  } catch(e){
+    return { events:[], profiles:{} };
+  }
+}
+function migrateV2(old){
+  const out = { events:[], profiles:{} };
+  (old.events || []).forEach(e => {
+    out.events.push({
+      id: e.id || uid(),
+      drug: e.drug,
+      dose: e.dose || '',
+      time: e.time,
+      interval: e.next ? Math.round((e.next - e.time) / 3600000) : 24,
+      unit: 'hour',
+      note: '',
+      remind: 0,
+    });
+  });
+  Object.entries(old.profiles || {}).forEach(([drug, p]) => {
+    out.profiles[drug] = {
+      interval: p.interval || 24, unit: 'hour',
+      dose: p.dose || '', remind: p.remind || 0,
+    };
+  });
+  return out;
+}
+function save(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function val(id){ return document.getElementById(id).value.trim(); }
+function setVal(id, v){ document.getElementById(id).value = v ?? ''; }
+
+function intervalMs(interval, unit){
+  return interval * (UNIT_MS[unit] || UNIT_MS.week);
+}
+function nextOf(ev){
+  return ev.time + intervalMs(ev.interval, ev.unit);
+}
+function fmt(ts){
+  const d = new Date(ts);
+  return d.toLocaleString('ru-RU', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+function fmtShort(ts){
+  const d = new Date(ts);
+  return d.toLocaleString('ru-RU', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+/* для input[type=datetime-local] нужен локальный формат YYYY-MM-DDTHH:MM */
+function toLocalInput(ts){
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fromLocalInput(str){
+  if (!str) return null;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+function diffStr(targetTs){
+  let s = Math.floor((targetTs - Date.now()) / 1000);
+  const overdue = s < 0;
+  s = Math.abs(s);
+  const days = Math.floor(s / 86400); s %= 86400;
+  const h = Math.floor(s / 3600); s %= 3600;
+  const m = Math.floor(s / 60); s %= 60;
+  const pad = n => String(n).padStart(2,'0');
+  let str;
+  if (days > 0) str = `${days}д ${pad(h)}:${pad(m)}:${pad(s)}`;
+  else str = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  return { str: (overdue ? 'просрочен ' : '') + str, overdue };
+}
+
+/* ============================================================
+   FORM / SEGMENTED CONTROL
+============================================================ */
+function setUnit(unit, isModal=false){
+  const seg = document.getElementById(isModal ? 'm_unitSeg' : 'unitSeg');
+  seg.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('active', b.dataset.unit === unit);
+  });
+  if (isModal) modalUnit = unit; else currentUnit = unit;
+}
+document.getElementById('unitSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-unit]');
+  if (btn) setUnit(btn.dataset.unit, false);
+});
+document.getElementById('m_unitSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-unit]');
+  if (btn) setUnit(btn.dataset.unit, true);
+});
+
+/* preset chips */
+document.getElementById('presets').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  try {
+    const p = JSON.parse(chip.dataset.preset);
+    setVal('drug', p.drug);
+    if (p.dose) setVal('dose', p.dose);
+    setVal('interval', p.interval);
+    setUnit(p.unit, false);
+  } catch(err){}
+});
+
+/* по умолчанию — текущее время в datetime-local */
+function setDefaultDateTime(){ setVal('when', toLocalInput(Date.now())); }
+
+/* ============================================================
+   SAVE / EDIT
+============================================================ */
+function saveInjection(){
+  const drug = val('drug');
+  const dose = val('dose');
+  const note = val('note');
+  const interval = parseInt(val('interval'), 10);
+  const remind = parseInt(val('remindUnit'), 10) || 0;
+  const whenStr = val('when');
+
+  if (!drug) return toast('Укажите препарат', 'err');
+  if (!interval || interval < 1) return toast('Укажите интервал', 'err');
+
+  const when = fromLocalInput(whenStr) ?? Date.now();
+  if (when > Date.now() + 60000) {
+    if (!confirm('Дата в будущем. Всё равно сохранить?')) return;
+  }
+
+  if (editingId) {
+    const ev = db.events.find(e => e.id === editingId);
+    if (ev) {
+      ev.drug = drug; ev.dose = dose; ev.note = note;
+      ev.time = when; ev.interval = interval; ev.unit = currentUnit;
+      ev.remind = remind;
+    }
+    editingId = null;
+  } else {
+    db.events.push({
+      id: uid(), drug, dose, note,
+      time: when, interval, unit: currentUnit, remind,
+    });
+  }
+
+  db.profiles[drug] = { interval, unit: currentUnit, dose, remind };
+  save();
+  scheduleNotificationsForAll();
+  resetForm();
+  render();
+  toast('Сохранено', 'ok');
+}
+
+function resetForm(){
+  editingId = null;
+  setVal('drug',''); setVal('dose',''); setVal('note','');
+  setVal('interval','');
+  setUnit('week', false);
+  setDefaultDateTime();
+  document.getElementById('formTitle').textContent = 'Записать укол';
+  document.getElementById('saveBtn').textContent = 'Сохранить';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+}
+function cancelEdit(){ resetForm(); toast('Отменено'); }
+
+function repeat(drug){
+  const p = db.profiles[drug];
+  setVal('drug', drug);
+  if (p) {
+    setVal('dose', p.dose || '');
+    setVal('interval', p.interval || '');
+    setUnit(p.unit || 'week', false);
+  }
+  setDefaultDateTime();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function del(id){
+  if (!confirm('Удалить запись?')) return;
+  db.events = db.events.filter(e => e.id !== id);
+  save(); render();
+  toast('Удалено');
+}
+
+/* ============================================================
+   EDIT MODAL (full edit, любая запись истории)
+============================================================ */
+function openEdit(id){
+  const ev = db.events.find(e => e.id === id);
+  if (!ev) return;
+  setVal('m_drug', ev.drug);
+  setVal('m_dose', ev.dose || '');
+  setVal('m_note', ev.note || '');
+  setVal('m_interval', ev.interval);
+  setVal('m_when', toLocalInput(ev.time));
+  setUnit(ev.unit || 'week', true);
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('modalBg').dataset.id = id;
+}
+function closeModal(){
+  document.getElementById('modalBg').classList.remove('open');
+  document.getElementById('modalBg').dataset.id = '';
+}
+function closeModalIfBg(e){ if (e.target.id === 'modalBg') closeModal(); }
+function saveModal(){
+  const id = document.getElementById('modalBg').dataset.id;
+  const ev = db.events.find(e => e.id === id);
+  if (!ev) return closeModal();
+
+  const drug = document.getElementById('m_drug').value.trim();
+  if (!drug) return toast('Укажите препарат', 'err');
+  const interval = parseInt(document.getElementById('m_interval').value, 10);
+  if (!interval || interval < 1) return toast('Укажите интервал', 'err');
+  const when = fromLocalInput(document.getElementById('m_when').value) ?? ev.time;
+
+  ev.drug = drug;
+  ev.dose = document.getElementById('m_dose').value.trim();
+  ev.note = document.getElementById('m_note').value.trim();
+  ev.interval = interval;
+  ev.unit = modalUnit;
+  ev.time = when;
+
+  db.profiles[drug] = { interval, unit: modalUnit, dose: ev.dose, remind: ev.remind || 0 };
+  save();
+  scheduleNotificationsForAll();
+  closeModal();
+  render();
+  toast('Изменения сохранены', 'ok');
+}
+
+/* ============================================================
+   RENDER
+============================================================ */
+function render(){
+  const events = db.events.slice().sort((a,b) => b.time - a.time);
+
+  /* datalist препаратов из профилей + истории */
+  const drugs = new Set();
+  events.forEach(e => drugs.add(e.drug));
+  Object.keys(db.profiles).forEach(d => drugs.add(d));
+  const dl = document.getElementById('drugList');
+  dl.innerHTML = '';
+  drugs.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; dl.appendChild(o);
+  });
+
+  /* история */
+  const h = document.getElementById('history'); h.innerHTML = '';
+  if (events.length === 0) {
+    h.innerHTML = '<div class="empty">Нет записей. Сделайте первый укол ↑</div>';
+  } else {
+    events.forEach(e => {
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.innerHTML = `
+        <div class="info">
+          <div class="name">${esc(e.drug)}${e.dose ? ' · ' + esc(e.dose) : ''}</div>
+          <div class="meta">
+            ${fmt(e.time)}
+            <span class="sep">•</span>${e.interval} ${UNIT_LABEL[e.unit] || ''}
+            ${e.note ? `<span class="sep">•</span>${esc(e.note)}` : ''}
+          </div>
+        </div>
+        <div class="actions">
+          <button onclick="repeat('${escAttr(e.drug)}')" title="Повторить">↻</button>
+          <button onclick="openEdit('${e.id}')" title="Изменить">✎</button>
+          <button onclick="del('${e.id}')" title="Удалить">✕</button>
+        </div>`;
+      h.appendChild(el);
+    });
+  }
+  document.getElementById('histCount').textContent = events.length;
+
+  /* активные курсы — последний укол по каждому препарату */
+  const latestByDrug = {};
+  db.events.forEach(e => {
+    if (!latestByDrug[e.drug] || latestByDrug[e.drug].time < e.time) latestByDrug[e.drug] = e;
+  });
+  const act = Object.values(latestByDrug).sort((a,b) => nextOf(a) - nextOf(b));
+  const ael = document.getElementById('activeList'); ael.innerHTML = '';
+  if (act.length === 0) {
+    ael.innerHTML = '<div class="empty">Пока пусто</div>';
+  } else {
+    act.forEach(e => {
+      const next = nextOf(e);
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.innerHTML = `
+        <div class="info">
+          <div class="name">${esc(e.drug)}${e.dose ? ' · ' + esc(e.dose) : ''}</div>
+          <div class="meta">
+            каждые ${e.interval} ${UNIT_LABEL_FULL[e.unit] || ''}
+            <span class="sep">•</span>след: ${fmtShort(next)}
+          </div>
+        </div>
+        <div class="countdown" data-next="${next}" data-from="${e.time}">
+          <span class="cd">—</span>
+          <small>осталось</small>
+        </div>`;
+      ael.appendChild(el);
+    });
+  }
+  document.getElementById('activeCount').textContent = act.length;
+
+  /* ближайший укол — KPI */
+  if (act.length) {
+    const nearest = act[0];
+    document.getElementById('nextTime').textContent = fmtShort(nextOf(nearest));
+    window.__nearest = { from: nearest.time, to: nextOf(nearest) };
+  } else {
+    document.getElementById('nextTime').textContent = '—';
+    window.__nearest = null;
+  }
+  tick();
+}
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s){ return esc(s).replace(/'/g,"\\'"); }
+
+/* ============================================================
+   TICK (countdown + progress)
+============================================================ */
+function tick(){
+  document.querySelectorAll('.item .countdown[data-next]').forEach(n => {
+    const next = +n.dataset.next;
+    const r = diffStr(next);
+    n.querySelector('.cd').textContent = r.str;
+    n.classList.toggle('overdue', r.overdue);
+  });
+  const cd = document.getElementById('countdown');
+  const fill = document.getElementById('progressFill');
+  if (window.__nearest) {
+    const { from, to } = window.__nearest;
+    const r = diffStr(to);
+    cd.textContent = r.str;
+    cd.style.color = r.overdue ? 'var(--warn)' : 'var(--text-bright)';
+    const total = to - from;
+    const passed = Date.now() - from;
+    const pct = Math.max(0, Math.min(100, (passed / total) * 100));
+    fill.style.width = pct + '%';
+    fill.classList.toggle('over', r.overdue);
+  } else {
+    cd.textContent = '—';
+    cd.style.color = 'var(--text-bright)';
+    fill.style.width = '0%';
+    fill.classList.remove('over');
+  }
+}
+setInterval(tick, 1000);
+
+/* ============================================================
+   IMPORT / EXPORT / CLEAR
+============================================================ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `injections_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function importData(){
+  const i = document.createElement('input');
+  i.type = 'file'; i.accept = 'application/json';
+  i.onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const parsed = JSON.parse(r.result);
+        // совместимость с v2
+        if (parsed.events && parsed.events[0] && parsed.events[0].next && !parsed.events[0].interval) {
+          db = migrateV2(parsed);
+        } else {
+          if (!parsed.events) parsed.events = [];
+          if (!parsed.profiles) parsed.profiles = {};
+          db = parsed;
+        }
+        save(); render();
+        toast('Импортировано', 'ok');
+      } catch(err){
+        toast('Ошибка файла', 'err');
+      }
+    };
+    r.readAsText(f);
+  };
+  i.click();
+}
+function clearAll(){
+  if (!confirm('Удалить ВСЕ данные? Это необратимо.')) return;
+  db = { events:[], profiles:{} };
+  save(); render();
+  toast('Очищено');
+}
+
+/* ============================================================
+   NOTIFICATIONS
+   setTimeout не переживает закрытие вкладки — делаем "проверку при
+   запуске" + интервал каждую минуту, отмечая выполненные нотификации
+============================================================ */
+async function requestNotify(){
+  if (!('Notification' in window)) return toast('Уведомления не поддерживаются', 'err');
+  const p = await Notification.requestPermission();
+  if (p === 'granted') {
+    toast('Уведомления включены', 'ok');
+    updateBadge();
+    scheduleNotificationsForAll();
+  } else {
+    toast('Отклонено', 'err');
+  }
+  updateBadge();
+}
+function updateBadge(){
+  const b = document.getElementById('swStatus');
+  if (!('Notification' in window)) {
+    b.textContent = 'без push';
+    b.className = 'badge warn';
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    b.textContent = '✓ онлайн+push';
+    b.className = 'badge ok';
+  } else if (Notification.permission === 'denied') {
+    b.textContent = 'push заблокирован';
+    b.className = 'badge warn';
+  } else {
+    b.textContent = 'push выкл.';
+    b.className = 'badge';
+  }
+}
+
+/* список уже показанных уведомлений (id события) */
+function getShownNotifs(){
+  try { return JSON.parse(localStorage.getItem('shown_notifs') || '[]'); } catch(e){ return []; }
+}
+function setShownNotifs(arr){ localStorage.setItem('shown_notifs', JSON.stringify(arr.slice(-200))); }
+
+function scheduleNotificationsForAll(){
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  // setTimeout ставим только для тех, что в пределах ~24 часов
+  const now = Date.now();
+  const shown = getShownNotifs();
+  const latestByDrug = {};
+  db.events.forEach(e => {
+    if (!latestByDrug[e.drug] || latestByDrug[e.drug].time < e.time) latestByDrug[e.drug] = e;
+  });
+  Object.values(latestByDrug).forEach(e => {
+    const next = nextOf(e);
+    const remindMs = (e.remind || 0) * 60000;
+    const fireAt = next - remindMs;
+    const delay = fireAt - now;
+    const key = `${e.id}_${next}`;
+    if (shown.includes(key)) return;
+    if (delay > 0 && delay < 86400000) {
+      setTimeout(() => fireNotif(e, key), delay);
+    }
+  });
+}
+function fireNotif(e, key){
+  const shown = getShownNotifs();
+  if (shown.includes(key)) return;
+  try {
+    new Notification('Время укола', {
+      body: `${e.drug}${e.dose ? ' · ' + e.dose : ''}`,
+      icon: 'icon-192.png',
+      tag: key,
+    });
+    shown.push(key);
+    setShownNotifs(shown);
+  } catch(err){}
+}
+
+/* фоновая проверка раз в минуту: показываем "просроченное" уведомление,
+   если момент наступил пока приложение было закрыто */
+function checkDueNotifs(){
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = Date.now();
+  const shown = getShownNotifs();
+  const latestByDrug = {};
+  db.events.forEach(e => {
+    if (!latestByDrug[e.drug] || latestByDrug[e.drug].time < e.time) latestByDrug[e.drug] = e;
+  });
+  Object.values(latestByDrug).forEach(e => {
+    const next = nextOf(e);
+    const remindMs = (e.remind || 0) * 60000;
+    const fireAt = next - remindMs;
+    const key = `${e.id}_${next}`;
+    if (shown.includes(key)) return;
+    // окно срабатывания: от fireAt до next+24ч
+    if (now >= fireAt && now <= next + 86400000) {
+      fireNotif(e, key);
+    }
+  });
+}
+setInterval(checkDueNotifs, 60000);
+
+/* ============================================================
+   SERVICE WORKER
+============================================================ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => updateBadge())
+    .catch(() => {});
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+let toastTimer;
+function toast(t, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = t;
+  el.className = 'toast ' + type;
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.style.display = 'none', 2200);
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+window.addEventListener('focus', () => { render(); checkDueNotifs(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { render(); checkDueNotifs(); }
+});
+
+setDefaultDateTime();
+updateBadge();
+render();
+scheduleNotificationsForAll();
+checkDueNotifs();
+</script>
+</body>
+</html>
